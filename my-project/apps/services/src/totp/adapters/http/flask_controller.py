@@ -27,17 +27,40 @@ def register():
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
-    first_name = data.get('first_name')  
-
+    first_name = data.get('first_name')
+    auth_method = data.get('auth_method', 'totp')
+    phone_number = data.get('phone_number')
 
     if not email or not password:
         return jsonify({'error': 'Email y contraseña requeridos'}), 400
 
-    uri = register_usecase.execute(email, password, first_name)
-    session['email'] = email
-    session['first_name'] = first_name  
+    if auth_method == 'sms' and not phone_number:
+        return jsonify({'error': 'Número de teléfono requerido para verificación SMS'}), 400
 
-    return jsonify({'otp_uri': uri, 'requires_otp': True}), 200
+    try:
+        if auth_method == 'totp':
+            uri = register_usecase.execute(email, password, first_name)
+            session['email'] = email
+            session['first_name'] = first_name
+            session['auth_method'] = 'totp'
+            return jsonify({'otp_uri': uri, 'requires_otp': True}), 200
+        else:
+            # Para método SMS
+            user_repo.collection.insert_one({
+                "email": email,
+                "password": password,
+                "first_name": first_name,
+                "auth_method": "sms",
+                "phone_number": phone_number,
+                "secret": None
+            })
+            session['email'] = email
+            session['first_name'] = first_name
+            session['auth_method'] = 'sms'
+            session['phone_number'] = phone_number
+            return jsonify({'message': 'Registro exitoso', 'requires_otp': True}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/login', methods=['POST'])
@@ -49,9 +72,24 @@ def login():
     user = user_repo.collection.find_one({"email": email})
     if user and user.get("password") == password:
         session['email'] = email
-        session['first_name'] = user.get("first_name", "")  
-        requires_otp = bool(user.get("secret"))  # True si ya tiene secret -> pedir OTP
-        return jsonify({"success": True, "requires_otp": requires_otp}), 200
+        session['first_name'] = user.get("first_name", "")
+        auth_method = user.get("auth_method", "totp")
+        session['auth_method'] = auth_method
+        
+        if auth_method == "sms":
+            session['phone_number'] = user.get("phone_number")
+            return jsonify({
+                "success": True, 
+                "requires_otp": True,
+                "auth_method": "sms"
+            }), 200
+        else:
+            requires_otp = bool(user.get("secret"))
+            return jsonify({
+                "success": True, 
+                "requires_otp": requires_otp,
+                "auth_method": "totp"
+            }), 200
     else:
         return jsonify({"success": False, "error": "Credenciales inválidas"}), 401
 

@@ -1,3 +1,15 @@
+document.addEventListener('DOMContentLoaded', () => {
+    const togglePassword = document.getElementById('togglePassword');
+    const password = document.getElementById('password');
+
+    togglePassword.addEventListener('click', () => {
+        const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+        password.setAttribute('type', type);
+        togglePassword.querySelector('i').classList.toggle('bi-eye');
+        togglePassword.querySelector('i').classList.toggle('bi-eye-slash');
+    });
+});
+
 document.getElementById("loginForm").addEventListener("submit", async function (e) {
     e.preventDefault();
 
@@ -18,10 +30,12 @@ document.getElementById("loginForm").addEventListener("submit", async function (
 
         if (response.ok && data.success) {
             if (data.requires_otp) {
-                // usuario ya tiene secret -> pedir OTP
-                window.location.href = "../../auth-methods/totp/verification/verification.html";
+                if (data.auth_method === 'sms') {
+                    window.location.href = "../../auth-methods/sms-otp/verification/verification.html";
+                } else {
+                    window.location.href = "../../auth-methods/totp/verification/verification.html";
+                }
             } else {
-                // no tiene secret -> acceso completo
                 window.location.href = "../../index/index.html";
             }
         } else {
