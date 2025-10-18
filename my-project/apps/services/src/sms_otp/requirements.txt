@@ -2,4 +2,4 @@ django-otp
 twilio
 flask
 pymongo
-python-dotenv
+python-dotenvflask-cors 

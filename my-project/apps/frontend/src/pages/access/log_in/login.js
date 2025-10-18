@@ -1,48 +1,86 @@
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('🚀 Login page loaded');
+    
     const togglePassword = document.getElementById('togglePassword');
     const password = document.getElementById('password');
+    const loginForm = document.getElementById('loginForm');
+    const loginMessage = document.getElementById('loginMessage');
 
-    togglePassword.addEventListener('click', () => {
-        const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
-        password.setAttribute('type', type);
-        togglePassword.querySelector('i').classList.toggle('bi-eye');
-        togglePassword.querySelector('i').classList.toggle('bi-eye-slash');
-    });
-});
-
-document.getElementById("loginForm").addEventListener("submit", async function (e) {
-    e.preventDefault();
-
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-
-    try {
-        const response = await fetch("http://127.0.0.1:5000/login", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            credentials: "include",
-            body: JSON.stringify({ email, password })
+    // Toggle password visibility
+    if (togglePassword) {
+        togglePassword.addEventListener('click', () => {
+            const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+            password.setAttribute('type', type);
+            togglePassword.querySelector('i').classList.toggle('bi-eye');
+            togglePassword.querySelector('i').classList.toggle('bi-eye-slash');
         });
+    }
 
-        const data = await response.json();
+    // Handle form submission
+    if (loginForm) {
+        loginForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            console.log('📝 Form submitted');
 
-        if (response.ok && data.success) {
-            if (data.requires_otp) {
-                if (data.auth_method === 'sms') {
-                    window.location.href = "../../auth-methods/sms-otp/verification/verification.html";
-                } else {
-                    window.location.href = "../../auth-methods/totp/verification/verification.html";
-                }
-            } else {
-                window.location.href = "../../index/index.html";
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value;
+
+            if (!email || !password) {
+                showMessage('Por favor completa todos los campos', 'error');
+                return;
             }
-        } else {
-            document.getElementById("loginMessage").textContent = data.error || "Error al iniciar sesión.";
+
+            showMessage('Iniciando sesión...', 'info');
+
+            try {
+                console.log('📤 Sending login request...');
+                
+                const response = await fetch("http://127.0.0.1:5000/login", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    credentials: "include",
+                    body: JSON.stringify({ email, password })
+                });
+
+                console.log('📨 Response status:', response.status);
+                
+                const data = await response.json();
+                console.log('📦 Response data:', data);
+
+                if (response.ok && data.success) {
+                    if (data.requires_otp) {
+                        // Guardar email para la verificación
+                        localStorage.setItem('pending_verification_email', email);
+                        
+                        showMessage('Redirigiendo a verificación...', 'success');
+                        
+                        setTimeout(() => {
+                            if (data.auth_method === 'sms') {
+                                window.location.href = "../../auth-methods/sms-otp/verification/verification.html";
+                            } else {
+                                window.location.href = "../../auth-methods/totp/verification/verification.html";
+                            }
+                        }, 1000);
+                    } else {
+                        window.location.href = "../../index/index.html";
+                    }
+                } else {
+                    showMessage(data.error || "Error al iniciar sesión", 'error');
+                }
+            } catch (error) {
+                console.error('❌ Error:', error);
+                showMessage("Error de conexión con el servidor", 'error');
+            }
+        });
+    }
+
+    function showMessage(message, type) {
+        if (loginMessage) {
+            loginMessage.textContent = message;
+            loginMessage.className = `mt-3 text-center text-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info'}`;
         }
-    } catch (error) {
-        document.getElementById("loginMessage").textContent = "Error de conexión con el servidor.";
-        console.error(error);
+        console.log(`💬 [${type}] ${message}`);
     }
 });
