@@ -52,8 +52,12 @@ btn_submt.addEventListener('click', () => {
         .then(response => response.json())
         .then(data => {
             if (data.valid) {
-                alert('Código OTP válido');
-                window.location.href = "../../../index/index.html";
+                // Establecer la sesión antes de redirigir
+                localStorage.setItem('auth_method', 'totp');
+                localStorage.setItem('isAuthenticated', 'true');
+                
+                // Redirigir al index con ruta relativa
+                window.location.href = "/my-project/apps/frontend/src/pages/index/index.html";
             } else {
                 alert('Código OTP inválido');
             }

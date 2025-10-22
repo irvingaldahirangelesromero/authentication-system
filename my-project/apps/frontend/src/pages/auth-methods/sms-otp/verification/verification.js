@@ -29,13 +29,20 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 console.log('📤 Sending verification request to port 8000...');
                 
+                // ✅ CAMBIO: Obtener email del localStorage y enviarlo explícitamente
+                const email = localStorage.getItem('pending_verification_email');
+                console.log('📧 Email enviado en verificación:', email);
+                
                 const response = await fetch('http://127.0.0.1:8000/verify-otp', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     credentials: 'include',
-                    body: JSON.stringify({ otp })
+                    body: JSON.stringify({ 
+                        otp: otp,
+                        email: email // ✅ ENVIAR EMAIL EXPLÍCITAMENTE
+                    })
                 });
 
                 console.log('📨 Response status:', response.status);
@@ -49,9 +56,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Limpiar datos temporales
                     localStorage.removeItem('pending_verification_email');
                     
-                    // REDIRECCIÓN CORREGIDA - Ruta absoluta al dashboard real
+                    // Establecer la sesión antes de redirigir
+                    localStorage.setItem('auth_method', 'sms');
+                    localStorage.setItem('isAuthenticated', 'true');
+                    localStorage.setItem('user_email', data.email || email || '');
+                    
+                    // REDIRECCIÓN CORREGIDA - Ruta relativa al dashboard
                     setTimeout(() => {
-                        window.location.href = '/src/pages/index/index.html';
+                        window.location.href = '/my-project/apps/frontend/src/pages/index/index.html';
                     }, 1500);
                 } else {
                     showMessage(data.error || '❌ Código inválido', 'error');
@@ -145,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const storedEmail = localStorage.getItem('pending_verification_email');
     if (storedEmail) {
         console.log('📧 Email encontrado en localStorage:', storedEmail);
-        showMessage('📱 Ingresa el código enviado por SMS', 'info');
+        showMessage(`📱 Ingresa el código enviado por SMS para ${storedEmail}`, 'info');
     } else {
         console.log('⚠️ No se encontró email en localStorage');
         showMessage('⚠️ No se encontró información de verificación', 'error');
