@@ -1,3 +1,4 @@
+# Ruta: authentication/my-project/apps/services/src/totp/application/register_user_usecase.py
 from domain.otp_generator import OTPGenerator
 
 class RegisterUserUseCase:

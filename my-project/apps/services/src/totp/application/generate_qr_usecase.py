@@ -1,4 +1,4 @@
-from domain.otp_generator import OTPGenerator
+# Ruta: authentication/my-project/apps/services/src/totp/application/generate_qr_usecase.py
 
 class GenerateQRUseCase:
     def __init__(self, qr_service):
