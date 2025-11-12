@@ -6,9 +6,9 @@ load_dotenv()
 
 class TwilioSMSAdapter:
     def __init__(self):
-        self.account_sid = os.getenv('TWILIO_ACCOUNT_SID', 'AC720a560740f38ccede69a4a762541420')
-        self.auth_token = os.getenv('TWILIO_AUTH_TOKEN', 'e70deae26e19415d952fe0703ccd6a7c')
-        self.phone_number = os.getenv('TWILIO_FROM_NUMBER', '+16073577367')
+        self.account_sid = os.getenv('TWILIO_ACCOUNT_SID')
+        self.auth_token = os.getenv('TWILIO_AUTH_TOKEN')
+        self.phone_number = os.getenv('TWILIO_FROM_NUMBER')
         
         print(f"🔧 Twilio Config:")
         print(f"   Account SID: {self.account_sid}")
