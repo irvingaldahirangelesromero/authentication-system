@@ -58,17 +58,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         setTimeout(() => {
                             if (data.auth_method === 'sms') {
-                                // ✅ NUEVO: Para SMS, usar nuestro servicio SMS OTP
-                                handleSmsLogin(email).then(() => {
-                                    window.location.href = "../../auth-methods/sms-otp/verification/verification.html";
-                                });
+                                window.location.href = "../../auth-methods/sms-otp/verification/verification.html";
                             } else {
-                                // Para TOTP, redirigir normalmente al servicio TOTP
                                 window.location.href = "../../auth-methods/totp/verification/verification.html";
                             }
                         }, 1000);
                     } else {
-                        // Login directo sin OTP
                         window.location.href = "../../index/index.html";
                     }
                 } else {
@@ -79,58 +74,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 showMessage("Error de conexión con el servidor", 'error');
             }
         });
-    }
-
-    // ✅ NUEVA FUNCIÓN: Manejar login SMS
-    async function handleSmsLogin(email) {
-        try {
-            console.log('📱 Iniciando proceso SMS para:', email);
-            
-            // 1. Obtener información del usuario desde MongoDB (servicio SMS)
-            const userResponse = await fetch('http://127.0.0.1:8000/get-user-by-email', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email: email })
-            });
-
-            if (userResponse.ok) {
-                const userData = await userResponse.json();
-                const phoneNumber = userData.phone_number;
-                
-                console.log('📞 Teléfono obtenido:', phoneNumber);
-                
-                if (!phoneNumber) {
-                    console.error('❌ No hay número de teléfono para este usuario');
-                    return;
-                }
-
-                // 2. Crear sesión y generar OTP en servicio SMS
-                const smsResponse = await fetch('http://127.0.0.1:8000/create-sms-session', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify({ 
-                        email: email,
-                        phone_number: phoneNumber
-                    })
-                });
-
-                if (smsResponse.ok) {
-                    console.log('✅ Sesión SMS creada y OTP generado');
-                } else {
-                    console.log('⚠️ No se pudo crear sesión SMS, pero continuamos...');
-                }
-            } else {
-                console.error('❌ Error obteniendo datos del usuario');
-            }
-        } catch (error) {
-            console.error('❌ Error en handleSmsLogin:', error);
-            // No bloqueamos el flujo si falla
-        }
     }
 
     function showMessage(message, type) {

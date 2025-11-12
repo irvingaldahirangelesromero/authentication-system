@@ -129,7 +129,7 @@ document.getElementById("registerBtn").addEventListener("click", async () => {
                 alert("⚠️ Usuario registrado. Si no recibes el SMS, usa 'Reenviar código'.");
                 localStorage.setItem('pending_verification_email', email);
                 setTimeout(() => {
-                    window.location.href = "../../auth-methods/sms-otp/verification/verification.html";
+                    window.location.href = "/src/pages/auth-methods/sms-otp/verification/verification.html";
                 }, 1000);
             } else {
                 alert("❌ Error: " + (data.error || 'Error en el registro'));
