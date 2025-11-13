@@ -1,3 +1,4 @@
+# Ruta: authentication/my-project/apps/services/src/totp/ports/user_repository_port.py
 from abc import ABC, abstractmethod
 
 class UserRepositoryPort(ABC):

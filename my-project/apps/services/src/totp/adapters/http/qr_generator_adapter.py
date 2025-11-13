@@ -1,3 +1,4 @@
+# Ruta: authentication/my-project/apps/services/src/totp/adapters/http/qr_generator_adapter.py
 import qrcode
 from qrcode.image.pil import PilImage
 from io import BytesIO

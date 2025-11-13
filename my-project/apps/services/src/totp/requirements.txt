@@ -1,6 +1,10 @@
+# Ruta: autentication/my-project/apps/services/src/totp/requirements.txt
 pyotp
 flask
 qrcode[pil]
 flask-cors
 pymongo
 Flask-Session
+python-dotenv
+pillow
+gunicorn

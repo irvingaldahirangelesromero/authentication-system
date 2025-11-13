@@ -69,8 +69,8 @@ document.getElementById("registerBtn").addEventListener("click", async () => {
         
         // DETERMINAR URL SEGÚN MÉTODO DE AUTENTICACIÓN
         const url = authMethod === 'sms' 
-            ? "http://127.0.0.1:8000/register"  // SMS OTP en puerto 8000
-            : "http://127.0.0.1:5000/register"; // TOTP en puerto 5000
+            ? "https://authentication-system-vkmt.onrender.com/register"  // SMS OTP en puerto 8000
+            : "https://authentication-system-xp73.onrender.com/register"; // TOTP en puerto 5000
         
         console.log(`🎯 Using URL: ${url} for auth method: ${authMethod}`);
 

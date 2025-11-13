@@ -1,3 +1,4 @@
+# Ruta: authentication/my-project/apps/services/src/totp/domain/otp_generator.py
 import pyotp
 
 class OTPGenerator:

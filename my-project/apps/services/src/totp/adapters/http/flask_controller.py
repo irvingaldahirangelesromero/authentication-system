@@ -1,4 +1,7 @@
+# Ruta: authentication/my-project/apps/services/src/totp/adapters/http/flask_controller.py
+
 import os
+import sys
 from flask import Flask, Response, request, jsonify, session, make_response
 from application.generate_qr_usecase import GenerateQRUseCase
 from application.validate_otp_usecase import ValidateOTPUseCase
@@ -7,6 +10,29 @@ from adapters.http.qr_generator_adapter import QRGeneratorAdapter
 from infraestructure.mongo_user_repository import MongoUserRepository
 from flask_cors import CORS
 
+# --- INICIO DE MODIFICACIÓN (NUEVA VERSIÓN) ---
+
+# Añadimos la carpeta 'src' (padre de 'totp', 'sms_otp', 'faceid') al path
+src_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+if src_path not in sys.path:
+    sys.path.insert(0, src_path)
+    print(f"Añadido al path (raíz de servicios): {src_path}")
+
+try:
+    # Ahora importamos desde la raíz 'src':
+    from faceid.adapters.http.faceid_controller import faceid_api
+    print("✅ Blueprint de Face ID cargado exitosamente.")
+
+except ImportError as e:
+    # Imprimimos el error exacto de importación
+    print(f"⚠️  ADVERTENCIA: No se pudo cargar el Blueprint de Face ID. Error: {e}")
+    faceid_api = None
+except Exception as e:
+    print(f"❌ ERROR INESPERADO al cargar Face ID: {e}")
+    faceid_api = None
+
+# --- FIN DE MODIFICACIÓN ---
+
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", "clave-local-segura")
 
@@ -14,8 +40,17 @@ app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["SESSION_COOKIE_SECURE"] = False
 
-CORS(app, supports_credentials=True,
-     resources={r"/*": {"origins": "http://127.0.0.1:5500"}})
+CORS(app, resources={
+    r"/*": {
+        "origins": [
+            "https://authentication-system-sigma-five.vercel.app"  # tu frontend en Vercel
+        ],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "supports_credentials": True
+    }
+})
+
 
 user_repo = MongoUserRepository()
 qr_adapter = QRGeneratorAdapter()

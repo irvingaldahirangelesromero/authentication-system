@@ -1,5 +1,8 @@
+# Ruta: autentication/my-project/apps/services/src/sms_otp/requirements.txt
 django-otp
 twilio
 flask
 pymongo
-python-dotenvflask-cors 
+python-dotenv
+flask-cors 
+gunicorn
