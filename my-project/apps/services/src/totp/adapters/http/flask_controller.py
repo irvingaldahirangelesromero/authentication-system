@@ -42,10 +42,13 @@ app.config["SESSION_COOKIE_SECURE"] = False
 
 CORS(app, resources={
     r"/*": {
-        "origins": ["*"],
+        "origins": [  
+            "https://authentication-system-sigma-five.vercel.app",  # frontend Vercel
+        ],
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],
- 
+         "supports_credentials": True  # importante si usas sesiones o cookies
+
     }
 })
 
