@@ -1,3 +1,4 @@
+# Ruta: autentication/my-project/apps/services/src/faceid/domain/face_recognizer.py
 import cv2
 import face_recognition
 import numpy as np

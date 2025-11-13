@@ -1,3 +1,4 @@
+# Ruta: autentication/my-project/apps/services/src/faceid/infraestructure/mongo_faceid_repository.py
 from pymongo import MongoClient
 from bson import ObjectId
 from typing import List, Dict, Any, Optional
@@ -9,11 +10,20 @@ from faceid.ports.user_repository_port import FaceIDUserRepositoryPort
 
 class MongoFaceIDRepository(FaceIDUserRepositoryPort):
     
-    def __init__(self, uri="mongodb://localhost:27017", db_name="otp_db"):
-        self.client = MongoClient(uri)
-        self.db = self.client[db_name]
-        self.collection = self.db["users"]
-        print(f"✅ Repositorio FaceID conectado a MongoDB: {db_name}.users")
+    def __init__(self):
+        mongo_uri = os.getenv('MONGODB_URI', 'mongodb+srv://autentication:gashj421b@cluster0.xoe7f.mongodb.net/autentication?retryWrites=true&w=majority&appName=Cluster0')
+        database_name = os.getenv('MONGODB_DB_NAME', 'autentication')
+        
+        print(f"🔗 FaceID - Conectando a MongoDB Atlas...")
+        try:
+            self.client = MongoClient(mongo_uri)
+            self.client.admin.command('ping')
+            self.db = self.client[database_name]
+            self.collection = self.db["users"]
+            print(f"✅ FaceID - Conectado a MongoDB Atlas: {database_name}.users")
+        except Exception as e:
+            print(f"❌ FaceID - ERROR conectando a MongoDB Atlas: {e}")
+            raise
 
     def _hash_password(self, password: str) -> str:
         """Hashea una contraseña con SHA256 (igual que en tu app.py)"""

@@ -1,3 +1,4 @@
+# Ruta: autentication/my-project/apps/services/src/faceid/application/delete_user_usecase.py
 from faceid.ports.user_repository_port import FaceIDUserRepositoryPort
 
 class DeleteUserUseCase:

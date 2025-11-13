@@ -399,17 +399,16 @@ def debug():
     }), 200
 
 if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 8000))
     print("=" * 60)
-    print("🚀 Starting SMS OTP Service CON MONGODB")
-    print("📡 Server: http://localhost:8000")
-    print("💾 MongoDB: otp_db.users")
+    print("🚀 Starting SMS OTP Service CON MONGODB ATLAS")
+    print(f"📡 Server: http://0.0.0.0:{port}")
+    print("💾 MongoDB: Atlas")
     print("🔐 Endpoints available:")
     print("   - POST /register")
-    print("   - POST /login")
-    print("   - POST /send-otp")
+    print("   - POST /login") 
     print("   - POST /verify-otp")
     print("   - POST /resend-otp")
     print("   - GET  /health")
-    print("   - GET  /debug")
     print("=" * 60)
-    app.run(debug=True, host='0.0.0.0', port=8000)
+    app.run(debug=False, host='0.0.0.0', port=port)

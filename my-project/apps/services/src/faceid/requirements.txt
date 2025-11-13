@@ -1,3 +1,4 @@
+# Ruta: autentication/my-project/apps/services/src/faceid/requirements.txt  
 # Requerimientos de FaceID
 # Quita Flask y Flask-Cors (ya están en totp)
 # Quita mysql-connector-python

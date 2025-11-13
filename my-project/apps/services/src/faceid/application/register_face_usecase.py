@@ -1,3 +1,4 @@
+# Ruta: autentication/my-project/apps/services/src/faceid/application/register_face_usecase.py
 from faceid.domain.face_recognizer import decode_image, get_face_encoding, serialize_encoding
 from faceid.ports.user_repository_port import FaceIDUserRepositoryPort
 

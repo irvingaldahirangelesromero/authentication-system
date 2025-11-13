@@ -1,3 +1,4 @@
+# Ruta: autentication/my-project/apps/services/src/faceid/adapters/http/faceid_controller.py
 from flask import Blueprint, request, jsonify
 from faceid.infrastructure.mongo_faceid_repository import MongoFaceIDRepository
 from faceid.application.register_face_usecase import RegisterFaceUseCase

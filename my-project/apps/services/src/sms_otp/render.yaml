@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: sms-otp-service
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
+    envVars:
+      - key: MONGODB_URI
+        fromDatabase: false
+      - key: TWILIO_ACCOUNT_SID
+        fromDatabase: false
+      - key: TWILIO_AUTH_TOKEN
+        fromDatabase: false
+      - key: TWILIO_FROM_NUMBER
+        fromDatabase: false
+      - key: FLASK_SECRET_KEY
+        generateValue: true
