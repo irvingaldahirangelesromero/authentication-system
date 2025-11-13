@@ -24,7 +24,9 @@ app.secret_key = secrets.token_hex(32)
 # Configuración CORS completa
 CORS(app, resources={
     r"/*": {
-        "origins": ["http://127.0.0.1:5500", "http://localhost:5500"],
+        "origins": [
+            "https://authentication-system-sigma-five.vercel.app/"
+        ],
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],
         "supports_credentials": True

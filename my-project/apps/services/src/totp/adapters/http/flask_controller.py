@@ -40,8 +40,17 @@ app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["SESSION_COOKIE_SECURE"] = False
 
-CORS(app, supports_credentials=True,
-     resources={r"/*": {"origins": "http://127.0.0.1:5500"}})
+CORS(app, resources={
+    r"/*": {
+        "origins": [
+            "https://authentication-system-sigma-five.vercel.app"  # tu frontend en Vercel
+        ],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "supports_credentials": True
+    }
+})
+
 
 user_repo = MongoUserRepository()
 qr_adapter = QRGeneratorAdapter()
