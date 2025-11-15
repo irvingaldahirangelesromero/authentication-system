@@ -44,11 +44,12 @@ CORS(app, resources={
     r"/*": {
         "origins": [  
             "https://authentication-system-sigma-five.vercel.app",  # frontend Vercel
+            "https://authentication-system-vkmt.onrender.com",
+            "https://authentication-system-xp73.onrender.com",
         ],
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],
          "supports_credentials": True  # importante si usas sesiones o cookies
-
     }
 })
 
