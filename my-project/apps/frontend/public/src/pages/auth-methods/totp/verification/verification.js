@@ -41,9 +41,9 @@ function updateValue() {
 btn_submt.addEventListener('click', () => {
     const otpCode = inputs.map(input => input.value).join('');
 
-    fetch('http://127.0.0.1:5000/validate', {
+    fetch('http://authentication-system-xp73.onrender.com/validate', {
         method: 'POST',
-        credentials: 'include',      
+        credentials: 'include',
         headers: {
             'Content-Type': 'application/json'
         },

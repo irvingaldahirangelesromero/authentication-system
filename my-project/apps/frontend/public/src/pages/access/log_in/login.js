@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 Login page loaded');
-    
+
     const togglePassword = document.getElementById('togglePassword');
     const password = document.getElementById('password');
     const loginForm = document.getElementById('loginForm');
@@ -34,8 +34,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 console.log('📤 Sending login request...');
-                
-                const response = await fetch("http://127.0.0.1:5000/login", {
+
+                const response = await fetch("http://authentication-system-xp73.onrender.com/login", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 console.log('📨 Response status:', response.status);
-                
+
                 const data = await response.json();
                 console.log('📦 Response data:', data);
 
@@ -53,9 +53,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (data.requires_otp) {
                         // Guardar email para la verificación
                         localStorage.setItem('pending_verification_email', email);
-                        
+
                         showMessage('Redirigiendo a verificación...', 'success');
-                        
+
                         setTimeout(() => {
                             if (data.auth_method === 'sms') {
                                 window.location.href = "../../auth-methods/sms-otp/verification/verification.html";
