@@ -27,15 +27,24 @@ document.addEventListener('DOMContentLoaded', () => {
             verifyButton.textContent = 'Verificando...';
 
             try {
-                console.log('📤 Sending verification request to port 8000...');
+                console.log('📤 Sending verification request to SMS OTP service...');
+
+                // MEJORA: Incluir el email en el cuerpo de la solicitud como backup
+                const email = localStorage.getItem('pending_verification_email');
+                const requestBody = { 
+                    otp: otp,
+                    email: email // Agregar email como backup
+                };
+
+                console.log('📧 Email incluido en request:', email);
 
                 const response = await fetch('https://authentication-system-xp73.onrender.com/verify-otp', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    credentials: 'include',
-                    body: JSON.stringify({ otp })
+                    credentials: 'include', // IMPORTANTE: Incluir cookies de sesión
+                    body: JSON.stringify(requestBody)
                 });
 
                 console.log('📨 Response status:', response.status);
@@ -49,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Limpiar datos temporales
                     localStorage.removeItem('pending_verification_email');
 
-                    // REDIRECCIÓN CORREGIDA - Ruta absoluta al dashboard real
+                    // Redirigir al dashboard
                     setTimeout(() => {
                         window.location.href = '/src/pages/index/index.html';
                     }, 1500);
@@ -71,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Reenviar OTP (ESTE SÍ FUNCIONA)
+    // Reenviar OTP
     if (resendButton) {
         resendButton.addEventListener('click', async () => {
             console.log('🔄 Resend button clicked');
@@ -80,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
             resendButton.textContent = 'Enviando...';
 
             try {
-                console.log('📤 Sending resend request to port 8000...');
+                console.log('📤 Sending resend request to SMS OTP service...');
 
                 // Obtener el email del localStorage
                 const email = localStorage.getItem('pending_verification_email');
@@ -98,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    credentials: 'include',
+                    credentials: 'include', // IMPORTANTE: Incluir cookies
                     body: JSON.stringify({
                         email: email
                     })
@@ -133,6 +142,28 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // MEJORA: Verificar estado de sesión al cargar la página
+    async function checkSessionStatus() {
+        try {
+            console.log('🔍 Checking session status...');
+            const response = await fetch('https://authentication-system-xp73.onrender.com/session-status', {
+                method: 'GET',
+                credentials: 'include'
+            });
+            
+            const sessionData = await response.json();
+            console.log('📋 Session status:', sessionData);
+            
+            if (sessionData.has_session) {
+                console.log('✅ Sesión activa encontrada:', sessionData.email);
+                // Actualizar localStorage con el email de la sesión
+                localStorage.setItem('pending_verification_email', sessionData.email);
+            }
+        } catch (error) {
+            console.log('⚠️ No se pudo verificar el estado de la sesión:', error);
+        }
+    }
+
     function showMessage(text, type) {
         if (messageDiv) {
             messageDiv.textContent = text;
@@ -146,8 +177,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (storedEmail) {
         console.log('📧 Email encontrado en localStorage:', storedEmail);
         showMessage('📱 Ingresa el código enviado por SMS', 'info');
+        
+        // Verificar también el estado de la sesión en el servidor
+        checkSessionStatus();
     } else {
         console.log('⚠️ No se encontró email en localStorage');
         showMessage('⚠️ No se encontró información de verificación', 'error');
+        
+        // Intentar recuperar sesión del servidor
+        checkSessionStatus();
     }
 });

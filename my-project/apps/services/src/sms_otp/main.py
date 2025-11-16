@@ -1,10 +1,10 @@
 # Ruta: authentication/my-project/apps/services/src/sms_otp/main.py
-
 import sys
 import os
 import secrets
 from flask import Flask, request, jsonify, session
 from flask_cors import CORS
+from datetime import timedelta
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, current_dir)
@@ -21,20 +21,25 @@ except ImportError as e:
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(32)
 
-# Configuración CORS completa
-CORS(app, resources={
-    r"/*": {
-        "origins": [  
-            "https://authentication-system-sigma-five.vercel.app",  # frontend Vercel
-            "https://authentication-system-xp73.onrender.com",
-            "https://authentication-system-vkmt.onrender.com",
-        ],
-        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization"],
-         "supports_credentials": True  # importante si usas sesiones o cookies
+# CONFIGURACIÓN MEJORADA DE SESIÓN Y CORS
+app.config.update(
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='None',
+    PERMANENT_SESSION_LIFETIME=timedelta(minutes=30)
+)
 
-    }
-})
+# CONFIGURACIÓN CORS COMPLETA PARA PRODUCCIÓN
+CORS(app, 
+     origins=[
+         "https://authentication-system-sigma-five.vercel.app",
+         "https://authentication-system-xp73.onrender.com",
+         "https://authentication-system-vkmt.onrender.com",
+     ],
+     supports_credentials=True,
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+     allow_headers=["Content-Type", "Authorization", "X-Requested-With"]
+)
 
 # INICIALIZAR MONGODB
 print("🔄 Conectando a MongoDB...")
@@ -114,13 +119,21 @@ def register():
             otp_sent = send_otp_use_case.execute(phone_number)
             
             if otp_sent:
-                # Guardar en sesión y pending_verifications
-                pending_verifications[email] = phone_number
+                # MEJORA: Configurar sesión correctamente antes de enviar respuesta
+                session.permanent = True
                 session['email'] = email
                 session['phone_number'] = phone_number
                 session['pending_2fa'] = True
+                session['user_authenticated'] = False
+                
+                # Guardar también en pending_verifications para backup
+                pending_verifications[email] = {
+                    'phone_number': phone_number,
+                    'timestamp': os.times().elapsed
+                }
                 
                 print(f"✅ OTP enviado exitosamente a {phone_number}")
+                print(f"📋 Sesión creada para: {email}")
                 
                 return jsonify({
                     'success': True,
@@ -134,81 +147,6 @@ def register():
                 return jsonify({'error': 'Failed to send OTP'}), 500
         
         # Para TOTP
-        return jsonify({
-            'success': True,
-            'message': 'User registered successfully',
-            'requires_qr': True
-        }), 200
-        
-    except Exception as e:
-        print(f"❌ Error in register: {e}")
-        return jsonify({'error': str(e)}), 500
-    if request.method == "OPTIONS":
-        return jsonify({"status": "ok"}), 200
-    
-    try:
-        data = request.get_json()
-        print("=" * 50)
-        print("📝 REGISTRO - Datos recibidos:")
-        print(f"   Email: {data.get('email')}")
-        print(f"   Teléfono: {data.get('phone_number')}")
-        print("=" * 50)
-        
-        email = data.get('email')
-        password = data.get('password')
-        first_name = data.get('first_name', '')
-        auth_method = data.get('auth_method', 'sms')
-        phone_number = data.get('phone_number')
-        
-        if not email or not password:
-            return jsonify({'error': 'Email and password are required'}), 400
-        
-        if mongo_repo.user_exists(email):
-            return jsonify({'error': 'User already exists'}), 400
-        
-        if auth_method == 'sms' and not phone_number:
-            return jsonify({'error': 'Phone number is required for SMS authentication'}), 400
-        
-        # Guardar usuario en MONGODB
-        user_data = {
-            'email': email,
-            'password': password,
-            'first_name': first_name,
-            'auth_method': auth_method,
-            'phone_number': phone_number,
-            'verified': False
-        }
-        
-        success = mongo_repo.save_user(email, user_data)
-        
-        if not success:
-            return jsonify({'error': 'Failed to save user'}), 500
-        
-        print(f"✅ Usuario guardado en MongoDB: {email}")
-        
-        # Si es SMS, enviar OTP
-        if auth_method == 'sms':
-            print(f"📤 ENVIANDO OTP a: {phone_number}")
-            success = send_otp_use_case.execute(phone_number)
-            
-            if success:
-                pending_verifications[email] = phone_number
-                print(f"✅ OTP enviado exitosamente")
-                
-                # Guardar en sesión
-                session['email'] = email
-                session['phone_number'] = phone_number
-                
-                return jsonify({
-                    'success': True,
-                    'message': 'User registered. OTP sent to phone.',
-                    'requires_verification': True,
-                    'email': email
-                }), 200
-            else:
-                print("❌ Falló el envío de OTP")
-                return jsonify({'error': 'Failed to send OTP'}), 500
-        
         return jsonify({
             'success': True,
             'message': 'User registered successfully',
@@ -246,11 +184,15 @@ def login():
         if user['password'] != password:
             return jsonify({'error': 'Invalid password'}), 401
         
+        # MEJORA: Configurar sesión correctamente
+        session.permanent = True
         session['email'] = email
         session['phone_number'] = user['phone_number']
         session['pending_2fa'] = True
+        session['user_authenticated'] = False
         
         print(f"✅ Login exitoso para: {email}")
+        print(f"📋 Sesión configurada: {dict(session)}")
         
         if user['auth_method'] == 'sms':
             phone_number = user['phone_number']
@@ -259,7 +201,10 @@ def login():
             success = send_otp_use_case.execute(phone_number)
             
             if success:
-                pending_verifications[email] = phone_number
+                pending_verifications[email] = {
+                    'phone_number': phone_number,
+                    'timestamp': os.times().elapsed
+                }
                 print(f"✅ OTP enviado exitosamente")
                 
                 return jsonify({
@@ -307,16 +252,27 @@ def resend_otp():
         # BUSCAR PHONE_NUMBER
         phone_number = None
         
-        # 1. Buscar en pending_verifications (sesión activa)
-        if email in pending_verifications:
-            phone_number = pending_verifications[email]
+        # 1. Buscar en sesión primero
+        if session.get('email') == email:
+            phone_number = session.get('phone_number')
+            print(f"📱 Teléfono encontrado en sesión: {phone_number}")
+        # 2. Buscar en pending_verifications
+        elif email in pending_verifications:
+            phone_number = pending_verifications[email]['phone_number']
             print(f"📱 Teléfono encontrado en pending: {phone_number}")
-        # 2. Buscar en MONGODB (usuario registrado)
+        # 3. Buscar en MONGODB (usuario registrado)
         else:
             user = mongo_repo.get_user(email)
             if user and user.get('phone_number'):
                 phone_number = user['phone_number']
-                pending_verifications[email] = phone_number  # Agregar a sesión activa
+                # Actualizar sesión y pending_verifications
+                session['email'] = email
+                session['phone_number'] = phone_number
+                session['pending_2fa'] = True
+                pending_verifications[email] = {
+                    'phone_number': phone_number,
+                    'timestamp': os.times().elapsed
+                }
                 print(f"📱 Teléfono encontrado en MongoDB: {phone_number}")
             else:
                 print(f"❌ Usuario no encontrado en MongoDB: {email}")
@@ -347,21 +303,39 @@ def verify_otp():
         print("🔍 VERIFICACIÓN OTP:")
         print(f"   OTP recibido: {data.get('otp')}")
         print(f"   Email en sesión: {session.get('email')}")
+        print(f"   Sesión completa: {dict(session)}")
         print("=" * 50)
         
         otp = data.get('otp')
-        email = session.get('email')
         
         if not otp:
             return jsonify({'error': 'OTP is required'}), 400
         
-        if not email:
-            return jsonify({'error': 'No active session. Please login again.'}), 400
+        # MEJORA: Múltiples formas de obtener el email
+        email = session.get('email')
         
-        # Obtener phone_number de la sesión
+        if not email:
+            # Intentar obtener de pending_verifications usando el OTP como referencia
+            # o buscar en el cuerpo de la solicitud
+            email = data.get('email')
+            if not email:
+                return jsonify({'error': 'No active session. Please login again.'}), 400
+            else:
+                # Si tenemos email pero no sesión, intentar recuperar la sesión
+                session['email'] = email
+                user = mongo_repo.get_user(email)
+                if user:
+                    session['phone_number'] = user.get('phone_number')
+        
+        # Obtener phone_number de la sesión o de la base de datos
         phone_number = session.get('phone_number')
         if not phone_number:
-            return jsonify({'error': 'No phone number found in session'}), 400
+            user = mongo_repo.get_user(email)
+            if user and user.get('phone_number'):
+                phone_number = user['phone_number']
+                session['phone_number'] = phone_number
+            else:
+                return jsonify({'error': 'No phone number found'}), 400
         
         print(f"🔐 Verificando OTP: {otp} para teléfono: {phone_number}")
         is_valid = verify_otp_use_case.execute(phone_number, otp)
@@ -370,17 +344,22 @@ def verify_otp():
             # Actualizar usuario en MongoDB
             mongo_repo.update_user(email, {'verified': True})
             
+            # MEJORA: Actualizar sesión correctamente
             session['pending_2fa'] = False
             session['authenticated'] = True
+            session['user_verified'] = True
             
             # Limpiar sesión activa
             if email in pending_verifications:
                 del pending_verifications[email]
             
             print("✅ OTP verificado exitosamente")
+            print(f"📋 Sesión actualizada: {dict(session)}")
+            
             return jsonify({
                 'valid': True,
-                'message': 'OTP verified successfully'
+                'message': 'OTP verified successfully',
+                'email': email
             }), 200
         else:
             print("❌ OTP inválido o expirado")
@@ -393,6 +372,16 @@ def verify_otp():
         print(f"❌ Error in verify_otp: {e}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/session-status', methods=['GET'])
+def session_status():
+    """Endpoint para verificar el estado de la sesión"""
+    return jsonify({
+        'has_session': bool(session.get('email')),
+        'email': session.get('email'),
+        'pending_2fa': session.get('pending_2fa', False),
+        'authenticated': session.get('authenticated', False)
+    }), 200
+
 @app.route('/debug', methods=['GET'])
 def debug():
     users_from_mongo = list(mongo_repo.collection.find({}, {'password': 0}))
@@ -403,10 +392,15 @@ def debug():
         'total_users': len(users_from_mongo)
     }), 200
 
+# MEJORA: Middleware para manejar sesiones
+@app.before_request
+def make_session_permanent():
+    session.permanent = True
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8000))
     print("=" * 60)
-    print("🚀 Starting SMS OTP Service CON MONGODB ATLAS")
+    print("🚀 Starting SMS OTP Service CON MONGODB ATLAS - VERSIÓN CORREGIDA")
     print(f"📡 Server: https://0.0.0.0:{port}")
     print("💾 MongoDB: Atlas")
     print("🔐 Endpoints available:")
@@ -414,6 +408,7 @@ if __name__ == '__main__':
     print("   - POST /login") 
     print("   - POST /verify-otp")
     print("   - POST /resend-otp")
+    print("   - GET  /session-status")
     print("   - GET  /health")
     print("=" * 60)
     app.run(debug=False, host='0.0.0.0', port=port)
