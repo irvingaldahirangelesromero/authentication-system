@@ -58,6 +58,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Limpiar datos temporales
                     localStorage.removeItem('pending_verification_email');
 
+                    localStorage.setItem('user_authenticated', 'true');
+                    localStorage.setItem('user_email', data.email || email);
+
                     // Redirigir al dashboard
                     setTimeout(() => {
                         window.location.href = '/src/pages/index/index.html';
