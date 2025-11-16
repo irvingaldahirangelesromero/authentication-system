@@ -37,7 +37,7 @@ app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", "clave-local-segura")
 
 app.config["SESSION_COOKIE_HTTPONLY"] = True
-app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SAMESITE"] = "None"
 app.config["SESSION_COOKIE_SECURE"] = True
 
 CORS(app, resources={
@@ -147,13 +147,19 @@ def user_info():
 
 @app.route('/qr')
 def qr():
+    print(f"DEBUG: Accediendo a /qr. Contenido de la sesión: {session}")
     email = session.get('email')
     if not email:
+        print("DEBUG: No hay email en la sesión para /qr. Devolviendo 401.")
         return jsonify({'error': 'No hay sesión activa'}), 401
+    
+    print(f"DEBUG: Email en sesión para /qr: {email}")
 
     secret = user_repo.get_secret_by_email(email)
     if not secret:
+        print(f"DEBUG: No se encontró secreto para el email {email}. Devolviendo 404.")
         return jsonify({'error': 'Usuario no registrado'}), 404
+    print(f"DEBUG: Secreto encontrado para {email}. Generando QR.")
     img_bytes = generate_qr_usecase.execute(secret, email, 'MyApp')
     return Response(img_bytes, mimetype='image/png')
 
