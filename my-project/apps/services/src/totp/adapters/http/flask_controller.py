@@ -38,7 +38,7 @@ app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", "clave-local-segur
 
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-app.config["SESSION_COOKIE_SECURE"] = False
+app.config["SESSION_COOKIE_SECURE"] = True
 
 CORS(app, resources={
     r"/*": {
