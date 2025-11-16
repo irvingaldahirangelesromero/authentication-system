@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 console.log('📤 Sending verification request to port 8000...');
 
-                const response = await fetch('https://https://authentication-system-xp73.onrender.com/verify-otp', {
+                const response = await fetch('https://authentication-system-xp73.onrender.com/verify-otp', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                const response = await fetch('https://https://authentication-system-xp73.onrender.com/resend-otp', {
+                const response = await fetch('https://authentication-system-xp73.onrender.com/resend-otp', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

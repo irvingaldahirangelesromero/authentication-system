@@ -1,6 +1,6 @@
 async function cerrarSesion() {
     try {
-        await fetch('https://https://authentication-system-vkmt.onrender.com/logout', {
+        await fetch('https://authentication-system-vkmt.onrender.com/logout', {
             method: 'POST',
             credentials: 'include'
         });
@@ -12,7 +12,7 @@ async function cerrarSesion() {
 
 async function cargarUsuario() {
     try {
-        const resp = await fetch('https://https://authentication-system-vkmt.onrender.com/user-info', {
+        const resp = await fetch('https://authentication-system-vkmt.onrender.com/user-info', {
             credentials: 'include'
         });
         if (resp.ok) {
