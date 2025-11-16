@@ -407,7 +407,7 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8000))
     print("=" * 60)
     print("🚀 Starting SMS OTP Service CON MONGODB ATLAS")
-    print(f"📡 Server: http://0.0.0.0:{port}")
+    print(f"📡 Server: https://0.0.0.0:{port}")
     print("💾 MongoDB: Atlas")
     print("🔐 Endpoints available:")
     print("   - POST /register")

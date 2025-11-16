@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (container.querySelector("img")) return;
 
     try {
-        const response = await fetch("http://authentication-system-xp73.onrender.com/qr", {
+        const response = await fetch("https://authentication-system-xp73.onrender.com/qr", {
             method: "GET",
             credentials: "include"
         });

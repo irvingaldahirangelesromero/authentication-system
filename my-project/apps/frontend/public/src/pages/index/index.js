@@ -1,6 +1,6 @@
 async function cerrarSesion() {
     try {
-        await fetch('http://authentication-system-xp73.onrender.com/logout', {
+        await fetch('https://authentication-system-xp73.onrender.com/logout', {
             method: 'POST',
             credentials: 'include'
         });
@@ -12,7 +12,7 @@ async function cerrarSesion() {
 
 async function cargarUsuario() {
     try {
-        const resp = await fetch('http://authentication-system-xp73.onrender.com/user-info', {
+        const resp = await fetch('https://authentication-system-xp73.onrender.com/user-info', {
             credentials: 'include'
         });
         if (resp.ok) {
