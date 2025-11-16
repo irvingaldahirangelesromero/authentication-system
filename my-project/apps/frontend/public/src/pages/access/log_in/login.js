@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 console.log('📤 Sending login request...');
 
-                const response = await fetch("https://authentication-system-xp73.onrender.com/login", {
+                const response = await fetch("https://https://authentication-system-vkmt.onrender.com/login", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
