@@ -1,3 +1,4 @@
+// Ruta: authentication-system/my-project/apps/frontend/public/src/pages/auth-methods/sms-otp/sms.js
 document.addEventListener('DOMContentLoaded', () => {
     const phoneInput = document.getElementById('phone');
     const sendButton = document.getElementById('sendOTP');

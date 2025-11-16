@@ -1,29 +1,69 @@
+// Ruta: authentication-system/my-project/apps/frontend/public/src/pages/index/index.js
 async function cerrarSesion() {
     try {
-        await fetch('https://authentication-system-vkmt.onrender.com/logout', {
-            method: 'POST',
-            credentials: 'include'
-        });
+        // Intentar cerrar sesión en ambos servicios
+        await Promise.allSettled([
+            fetch('https://authentication-system-vkmt.onrender.com/logout', {
+                method: 'POST',
+                credentials: 'include'
+            }),
+            fetch('https://authentication-system-xp73.onrender.com/logout', {
+                method: 'POST', 
+                credentials: 'include'
+            })
+        ]);
     } catch (e) {
         console.error('Logout failed', e);
     }
+    
+    // Limpiar localStorage
+    localStorage.removeItem('pending_verification_email');
+    localStorage.removeItem('user_email');
+    
+    // Redirigir al login
     window.location.replace('../access/log_in/login.html');
 }
 
 async function cargarUsuario() {
     try {
-        const resp = await fetch('https://authentication-system-vkmt.onrender.com/user-info', {
+        console.log('🔍 Verificando sesión en dashboard...');
+        
+        // PRIMERO intentar con el servicio TOTP (principal)
+        let resp = await fetch('https://authentication-system-vkmt.onrender.com/user-info', {
             credentials: 'include'
         });
+        
         if (resp.ok) {
             const data = await resp.json();
+            console.log('✅ Sesión TOTP activa:', data);
             document.getElementById('welcome-text').textContent =
                 `¡Bienvenido ${data.first_name || 'Usuario'}!`;
-        } else {
-            window.location.replace('../access/log_in/login.html');
+            return;
         }
-    } catch {
+        
+        // SI FALLA TOTP, intentar con SMS OTP
+        console.log('⚠️ Sesión TOTP no encontrada, intentando con SMS OTP...');
+        resp = await fetch('https://authentication-system-xp73.onrender.com/user-info', {
+            credentials: 'include'
+        });
+        
+        if (resp.ok) {
+            const data = await resp.json();
+            console.log('✅ Sesión SMS OTP activa:', data);
+            document.getElementById('welcome-text').textContent =
+                `¡Bienvenido ${data.first_name || 'Usuario'}!`;
+            return;
+        }
+        
+        // SI AMBOS FALLAN, redirigir al login
+        console.log('❌ No hay sesión activa en ningún servicio');
+        window.location.replace('../access/log_in/login.html');
+        
+    } catch (error) {
+        console.error('❌ Error cargando usuario:', error);
         window.location.replace('../access/log_in/login.html');
     }
 }
-cargarUsuario();
+
+// Cargar usuario cuando la página se carga
+document.addEventListener('DOMContentLoaded', cargarUsuario);

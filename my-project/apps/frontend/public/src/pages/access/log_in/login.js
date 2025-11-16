@@ -35,7 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 console.log('📤 Sending login request...');
 
-                const response = await fetch("https://authentication-system-vkmt.onrender.com/login", {
+                // PRIMERO intentar con TOTP (servicio principal)
+                let response = await fetch("https://authentication-system-vkmt.onrender.com/login", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
@@ -44,15 +45,30 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify({ email, password })
                 });
 
-                console.log('📨 Response status:', response.status);
+                console.log('📨 Response status TOTP:', response.status);
+
+                // Si TOTP falla, intentar con SMS OTP
+                if (!response.ok) {
+                    console.log('⚠️ TOTP failed, trying SMS OTP...');
+                    response = await fetch("https://authentication-system-xp73.onrender.com/login", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        credentials: "include",
+                        body: JSON.stringify({ email, password })
+                    });
+                    console.log('📨 Response status SMS OTP:', response.status);
+                }
 
                 const data = await response.json();
                 console.log('📦 Response data:', data);
 
                 if (response.ok && data.success) {
                     if (data.requires_otp) {
-                        // Guardar email para la verificación
+                        // Guardar email para la verificación en AMBOS localStorage
                         localStorage.setItem('pending_verification_email', email);
+                        localStorage.setItem('user_email', email);
 
                         showMessage('Redirigiendo a verificación...', 'success');
 
@@ -64,6 +80,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                         }, 1000);
                     } else {
+                        // Login directo sin OTP
+                        localStorage.setItem('user_email', email);
                         window.location.href = "../../index/index.html";
                     }
                 } else {

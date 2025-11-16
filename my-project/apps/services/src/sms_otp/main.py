@@ -26,7 +26,8 @@ app.config.update(
     SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE='None',
-    PERMANENT_SESSION_LIFETIME=timedelta(minutes=30)
+    PERMANENT_SESSION_LIFETIME=timedelta(minutes=30),
+    SESSION_COOKIE_DOMAIN='.onrender.com'  # IMPORTANTE: Dominio compartido
 )
 
 # CONFIGURACIÓN CORS COMPLETA PARA PRODUCCIÓN
@@ -125,6 +126,7 @@ def register():
                 session['phone_number'] = phone_number
                 session['pending_2fa'] = True
                 session['user_authenticated'] = False
+                session['auth_method'] = 'sms'
                 
                 # Guardar también en pending_verifications para backup
                 pending_verifications[email] = {
@@ -190,6 +192,7 @@ def login():
         session['phone_number'] = user['phone_number']
         session['pending_2fa'] = True
         session['user_authenticated'] = False
+        session['auth_method'] = user.get('auth_method', 'sms')
         
         print(f"✅ Login exitoso para: {email}")
         print(f"📋 Sesión configurada: {dict(session)}")
@@ -269,6 +272,7 @@ def resend_otp():
                 session['email'] = email
                 session['phone_number'] = phone_number
                 session['pending_2fa'] = True
+                session['auth_method'] = user.get('auth_method', 'sms')
                 pending_verifications[email] = {
                     'phone_number': phone_number,
                     'timestamp': os.times().elapsed
@@ -326,6 +330,7 @@ def verify_otp():
                 user = mongo_repo.get_user(email)
                 if user:
                     session['phone_number'] = user.get('phone_number')
+                    session['auth_method'] = user.get('auth_method', 'sms')
         
         # Obtener phone_number de la sesión o de la base de datos
         phone_number = session.get('phone_number')
@@ -348,6 +353,7 @@ def verify_otp():
             session['pending_2fa'] = False
             session['authenticated'] = True
             session['user_verified'] = True
+            session['user_authenticated'] = True
             
             # Limpiar sesión activa
             if email in pending_verifications:
@@ -359,7 +365,8 @@ def verify_otp():
             return jsonify({
                 'valid': True,
                 'message': 'OTP verified successfully',
-                'email': email
+                'email': email,
+                'authenticated': True
             }), 200
         else:
             print("❌ OTP inválido o expirado")
@@ -379,7 +386,26 @@ def session_status():
         'has_session': bool(session.get('email')),
         'email': session.get('email'),
         'pending_2fa': session.get('pending_2fa', False),
-        'authenticated': session.get('authenticated', False)
+        'authenticated': session.get('authenticated', False),
+        'auth_method': session.get('auth_method', 'sms')
+    }), 200
+
+@app.route('/user-info', methods=['GET'])
+def user_info():
+    """Endpoint para obtener información del usuario autenticado"""
+    email = session.get('email')
+    if not email:
+        return jsonify({'error': 'No active session'}), 401
+    
+    user = mongo_repo.get_user(email)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    
+    return jsonify({
+        'email': user['email'],
+        'first_name': user.get('first_name', ''),
+        'auth_method': user.get('auth_method', 'sms'),
+        'verified': user.get('verified', False)
     }), 200
 
 @app.route('/debug', methods=['GET'])
@@ -392,6 +418,25 @@ def debug():
         'total_users': len(users_from_mongo)
     }), 200
 
+@app.route('/logout', methods=['POST', 'OPTIONS'])
+def logout():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
+    
+    try:
+        email = session.get('email')
+        if email and email in pending_verifications:
+            del pending_verifications[email]
+        
+        session.clear()
+        print(f"✅ Logout exitoso para: {email}")
+        
+        resp = jsonify({"success": True, "message": "Logged out successfully"})
+        return resp
+    except Exception as e:
+        print(f"❌ Error in logout: {e}")
+        return jsonify({'error': str(e)}), 500
+
 # MEJORA: Middleware para manejar sesiones
 @app.before_request
 def make_session_permanent():
@@ -400,7 +445,7 @@ def make_session_permanent():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8000))
     print("=" * 60)
-    print("🚀 Starting SMS OTP Service CON MONGODB ATLAS - VERSIÓN CORREGIDA")
+    print("🚀 Starting SMS OTP Service CON MONGODB ATLAS - VERSIÓN MEJORADA")
     print(f"📡 Server: https://0.0.0.0:{port}")
     print("💾 MongoDB: Atlas")
     print("🔐 Endpoints available:")
@@ -409,6 +454,7 @@ if __name__ == '__main__':
     print("   - POST /verify-otp")
     print("   - POST /resend-otp")
     print("   - GET  /session-status")
+    print("   - GET  /user-info")
     print("   - GET  /health")
     print("=" * 60)
     app.run(debug=False, host='0.0.0.0', port=port)

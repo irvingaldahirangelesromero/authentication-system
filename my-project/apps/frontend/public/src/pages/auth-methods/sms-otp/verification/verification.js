@@ -1,3 +1,4 @@
+// Ruta: authentication-system/my-project/apps/frontend/public/src/pages/auth-methods/sms-otp/verification/verification.js
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 Verification page loaded');
 
@@ -30,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('📤 Sending verification request to SMS OTP service...');
 
                 // MEJORA: Incluir el email en el cuerpo de la solicitud como backup
-                const email = localStorage.getItem('pending_verification_email');
+                const email = localStorage.getItem('pending_verification_email') || localStorage.getItem('user_email');
                 const requestBody = { 
                     otp: otp,
                     email: email // Agregar email como backup
@@ -55,16 +56,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (response.ok && data.valid) {
                     showMessage('✅ Verificación exitosa. Redirigiendo al dashboard...', 'success');
 
-                    // Limpiar datos temporales
+                    // Limpiar datos temporales pero mantener user_email
                     localStorage.removeItem('pending_verification_email');
+                    localStorage.setItem('user_email', email); // Mantener email para sesión
 
-                    localStorage.setItem('user_authenticated', 'true');
-                    localStorage.setItem('user_email', data.email || email);
-
-                    // Redirigir al dashboard
+                    // MEJORA: Pequeña pausa para asegurar que la sesión se establezca
                     setTimeout(() => {
                         window.location.href = '/src/pages/index/index.html';
-                    }, 1500);
+                    }, 2000);
                 } else {
                     showMessage(data.error || '❌ Código inválido', 'error');
                     otpInput.value = '';
@@ -95,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('📤 Sending resend request to SMS OTP service...');
 
                 // Obtener el email del localStorage
-                const email = localStorage.getItem('pending_verification_email');
+                const email = localStorage.getItem('pending_verification_email') || localStorage.getItem('user_email');
                 console.log('📧 Email from localStorage:', email);
 
                 if (!email) {
@@ -161,6 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('✅ Sesión activa encontrada:', sessionData.email);
                 // Actualizar localStorage con el email de la sesión
                 localStorage.setItem('pending_verification_email', sessionData.email);
+                localStorage.setItem('user_email', sessionData.email);
             }
         } catch (error) {
             console.log('⚠️ No se pudo verificar el estado de la sesión:', error);
@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Verificar si hay email en localStorage al cargar la página
-    const storedEmail = localStorage.getItem('pending_verification_email');
+    const storedEmail = localStorage.getItem('pending_verification_email') || localStorage.getItem('user_email');
     if (storedEmail) {
         console.log('📧 Email encontrado en localStorage:', storedEmail);
         showMessage('📱 Ingresa el código enviado por SMS', 'info');
