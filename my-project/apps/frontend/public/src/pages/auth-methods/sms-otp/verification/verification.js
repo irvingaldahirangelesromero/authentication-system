@@ -56,13 +56,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (response.ok && data.valid) {
                     showMessage('✅ Verificación exitosa. Redirigiendo al dashboard...', 'success');
 
-                    // Limpiar datos temporales pero mantener user_email
+                    // MEJORA: Guardar información importante en localStorage
+                    localStorage.setItem('user_email', email);
+                    localStorage.setItem('user_auth_method', 'sms'); // Marcar como usuario SMS
                     localStorage.removeItem('pending_verification_email');
-                    localStorage.setItem('user_email', email); // Mantener email para sesión
 
-                    // MEJORA: Pequeña pausa para asegurar que la sesión se establezca
-                    setTimeout(() => {
-                        window.location.href = '/src/pages/index/index.html';
+                    console.log('💾 Información guardada en localStorage:', {
+                        user_email: email,
+                        user_auth_method: 'sms'
+                    });
+
+                    // MEJORA: Verificar que la sesión esté activa antes de redirigir
+                    setTimeout(async () => {
+                        try {
+                            console.log('🔍 Verificando sesión antes de redirigir...');
+                            const sessionCheck = await fetch('https://authentication-system-xp73.onrender.com/session-status', {
+                                method: 'GET',
+                                credentials: 'include'
+                            });
+                            
+                            if (sessionCheck.ok) {
+                                const sessionData = await sessionCheck.json();
+                                console.log('✅ Sesión confirmada:', sessionData);
+                                window.location.href = '/src/pages/index/index.html';
+                            } else {
+                                console.log('❌ Sesión no confirmada, reintentando...');
+                                // Reintentar una vez más
+                                setTimeout(() => {
+                                    window.location.href = '/src/pages/index/index.html';
+                                }, 1000);
+                            }
+                        } catch (error) {
+                            console.log('⚠️ Error verificando sesión, redirigiendo de todas formas...');
+                            window.location.href = '/src/pages/index/index.html';
+                        }
                     }, 2000);
                 } else {
                     showMessage(data.error || '❌ Código inválido', 'error');
@@ -161,6 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Actualizar localStorage con el email de la sesión
                 localStorage.setItem('pending_verification_email', sessionData.email);
                 localStorage.setItem('user_email', sessionData.email);
+                localStorage.setItem('user_auth_method', 'sms');
             }
         } catch (error) {
             console.log('⚠️ No se pudo verificar el estado de la sesión:', error);

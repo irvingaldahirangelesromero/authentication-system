@@ -19,6 +19,7 @@ async function cerrarSesion() {
     // Limpiar localStorage
     localStorage.removeItem('pending_verification_email');
     localStorage.removeItem('user_email');
+    localStorage.removeItem('user_auth_method');
     
     // Redirigir al login
     window.location.replace('../access/log_in/login.html');
@@ -28,30 +29,73 @@ async function cargarUsuario() {
     try {
         console.log('🔍 Verificando sesión en dashboard...');
         
-        // PRIMERO intentar con el servicio TOTP (principal)
-        let resp = await fetch('https://authentication-system-vkmt.onrender.com/user-info', {
+        // Obtener información del método de autenticación desde localStorage
+        const userEmail = localStorage.getItem('user_email');
+        const authMethod = localStorage.getItem('user_auth_method');
+        
+        console.log('📋 Información localStorage:', { userEmail, authMethod });
+        
+        // PRIMERO intentar con el servicio basado en el método de autenticación
+        if (authMethod === 'sms') {
+            console.log('📱 Verificando sesión SMS OTP...');
+            let resp = await fetch('https://authentication-system-xp73.onrender.com/user-info', {
+                method: 'GET',
+                credentials: 'include'
+            });
+            
+            if (resp.ok) {
+                const data = await resp.json();
+                console.log('✅ Sesión SMS OTP activa:', data);
+                document.getElementById('welcome-text').textContent =
+                    `¡Bienvenido ${data.first_name || 'Usuario'}!`;
+                return;
+            }
+        } else {
+            // Por defecto o TOTP, intentar con servicio TOTP
+            console.log('🔐 Verificando sesión TOTP...');
+            let resp = await fetch('https://authentication-system-vkmt.onrender.com/user-info', {
+                method: 'GET',
+                credentials: 'include'
+            });
+            
+            if (resp.ok) {
+                const data = await resp.json();
+                console.log('✅ Sesión TOTP activa:', data);
+                document.getElementById('welcome-text').textContent =
+                    `¡Bienvenido ${data.first_name || 'Usuario'}!`;
+                return;
+            }
+        }
+        
+        // SI FALLA el método preferido, intentar con el otro
+        console.log('🔄 Intentando método alternativo...');
+        let resp = await fetch('https://authentication-system-xp73.onrender.com/user-info', {
+            method: 'GET',
             credentials: 'include'
         });
         
         if (resp.ok) {
             const data = await resp.json();
-            console.log('✅ Sesión TOTP activa:', data);
+            console.log('✅ Sesión SMS OTP activa (método alternativo):', data);
             document.getElementById('welcome-text').textContent =
                 `¡Bienvenido ${data.first_name || 'Usuario'}!`;
+            // Actualizar localStorage
+            localStorage.setItem('user_auth_method', 'sms');
             return;
         }
         
-        // SI FALLA TOTP, intentar con SMS OTP
-        console.log('⚠️ Sesión TOTP no encontrada, intentando con SMS OTP...');
-        resp = await fetch('https://authentication-system-xp73.onrender.com/user-info', {
+        resp = await fetch('https://authentication-system-vkmt.onrender.com/user-info', {
+            method: 'GET',
             credentials: 'include'
         });
         
         if (resp.ok) {
             const data = await resp.json();
-            console.log('✅ Sesión SMS OTP activa:', data);
+            console.log('✅ Sesión TOTP activa (método alternativo):', data);
             document.getElementById('welcome-text').textContent =
                 `¡Bienvenido ${data.first_name || 'Usuario'}!`;
+            // Actualizar localStorage
+            localStorage.setItem('user_auth_method', 'totp');
             return;
         }
         

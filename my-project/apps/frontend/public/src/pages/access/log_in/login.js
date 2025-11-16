@@ -50,9 +50,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 let data = await response.json();
                 console.log('📦 Response data TOTP:', data);
 
-                // Si TOTP falla o el usuario es de tipo SMS, intentar con SMS OTP
-                if (!response.ok || (data.success && data.auth_method === 'sms')) {
-                    console.log('🔄 Usuario es SMS o TOTP falló, intentando con SMS OTP...');
+                // Si TOTP indica que es usuario SMS, usar SMS OTP
+                if (response.ok && data.success && data.auth_method === 'sms') {
+                    console.log('🔄 Usuario detectado como SMS, usando servicio SMS OTP...');
                     
                     response = await fetch("https://authentication-system-xp73.onrender.com/login", {
                         method: "POST",
@@ -73,6 +73,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Guardar email para la verificación en AMBOS localStorage
                         localStorage.setItem('pending_verification_email', email);
                         localStorage.setItem('user_email', email);
+                        
+                        // Guardar el método de autenticación
+                        if (data.auth_method) {
+                            localStorage.setItem('user_auth_method', data.auth_method);
+                        }
 
                         showMessage('Redirigiendo a verificación...', 'success');
 
@@ -88,6 +93,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else {
                         // Login directo sin OTP
                         localStorage.setItem('user_email', email);
+                        if (data.auth_method) {
+                            localStorage.setItem('user_auth_method', data.auth_method);
+                        }
                         console.log('✅ Login directo exitoso, redirigiendo al dashboard...');
                         window.location.href = "../../index/index.html";
                     }
