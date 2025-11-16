@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 Verification page loaded');
-    
+
     const otpInput = document.getElementById('otp');
     const verifyButton = document.getElementById('verifyOTP');
     const resendButton = document.getElementById('resendOTP');
@@ -15,9 +15,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (verifyButton) {
         verifyButton.addEventListener('click', async () => {
             console.log('🔍 Verify button clicked');
-            
+
             const otp = otpInput.value.trim();
-            
+
             if (!otp || otp.length !== 6) {
                 showMessage('Por favor ingresa un código válido de 6 dígitos', 'error');
                 return;
@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 console.log('📤 Sending verification request to port 8000...');
-                
+
                 const response = await fetch('https://authentication-system-vkmt.onrender.com/verify-otp', {
                     method: 'POST',
                     headers: {
@@ -39,16 +39,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 console.log('📨 Response status:', response.status);
-                
+
                 const data = await response.json();
                 console.log('📦 Response data:', data);
 
                 if (response.ok && data.valid) {
                     showMessage('✅ Verificación exitosa. Redirigiendo al dashboard...', 'success');
-                    
+
                     // Limpiar datos temporales
                     localStorage.removeItem('pending_verification_email');
-                    
+
                     // REDIRECCIÓN CORREGIDA - Ruta absoluta al dashboard real
                     setTimeout(() => {
                         window.location.href = '/src/pages/index/index.html';
@@ -57,14 +57,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     showMessage(data.error || '❌ Código inválido', 'error');
                     otpInput.value = '';
                     otpInput.focus();
-                    
+
                     verifyButton.disabled = false;
                     verifyButton.textContent = 'Verificar';
                 }
             } catch (error) {
                 console.error('❌ Error:', error);
                 showMessage('❌ Error de conexión', 'error');
-                
+
                 verifyButton.disabled = false;
                 verifyButton.textContent = 'Verificar';
             }
@@ -75,17 +75,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (resendButton) {
         resendButton.addEventListener('click', async () => {
             console.log('🔄 Resend button clicked');
-            
+
             resendButton.disabled = true;
             resendButton.textContent = 'Enviando...';
 
             try {
                 console.log('📤 Sending resend request to port 8000...');
-                
+
                 // Obtener el email del localStorage
                 const email = localStorage.getItem('pending_verification_email');
                 console.log('📧 Email from localStorage:', email);
-                
+
                 if (!email) {
                     showMessage('❌ No se encontró información de verificación', 'error');
                     resendButton.disabled = false;
@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         'Content-Type': 'application/json',
                     },
                     credentials: 'include',
-                    body: JSON.stringify({ 
+                    body: JSON.stringify({
                         email: email
                     })
                 });

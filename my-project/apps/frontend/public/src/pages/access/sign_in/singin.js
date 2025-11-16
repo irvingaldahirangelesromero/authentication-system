@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 Sign in page loaded');
-    
+
     // Toggle password visibility
     const togglePassword = document.getElementById('togglePassword');
     const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 document.getElementById("registerBtn").addEventListener("click", async () => {
     console.log('📝 Register button clicked');
-    
+
     const first_name = document.getElementById("first_name").value.trim();
     const email = document.getElementById("your_email").value.trim();
     const password = document.getElementById("password").value;
@@ -66,12 +66,12 @@ document.getElementById("registerBtn").addEventListener("click", async () => {
 
     try {
         console.log('📤 Sending registration request...');
-        
+
         // DETERMINAR URL SEGÚN MÉTODO DE AUTENTICACIÓN
-        const url = authMethod === 'sms' 
+        const url = authMethod === 'sms'
             ? "https://authentication-system-vkmt.onrender.com/register"  // SMS OTP en puerto 8000
             : "https://authentication-system-xp73.onrender.com/register"; // TOTP en puerto 5000
-        
+
         console.log(`🎯 Using URL: ${url} for auth method: ${authMethod}`);
 
         const response = await fetch(url, {
@@ -79,18 +79,18 @@ document.getElementById("registerBtn").addEventListener("click", async () => {
             headers: {
                 "Content-Type": "application/json"
             },
-            credentials: "include", 
-            body: JSON.stringify({ 
-                email, 
-                password, 
-                first_name, 
+            credentials: "include",
+            body: JSON.stringify({
+                email,
+                password,
+                first_name,
                 auth_method: authMethod,
-                phone_number: phone_number 
+                phone_number: phone_number
             })
         });
 
         console.log('📨 Response status:', response.status);
-        
+
         const data = await response.json();
         console.log('📦 Response data:', data);
 
@@ -99,10 +99,10 @@ document.getElementById("registerBtn").addEventListener("click", async () => {
                 // VERIFICAR SI EL OTP SE ENVIÓ CORRECTAMENTE
                 if (data.success && data.requires_otp) {
                     alert("✅ Usuario registrado correctamente. Se envió un código por SMS.");
-                    
+
                     // Guardar email para verificación
                     localStorage.setItem('pending_verification_email', email);
-                    
+
                     // Redirigir a verificación SMS
                     setTimeout(() => {
                         window.location.href = "../../auth-methods/sms-otp/verification/verification.html";
@@ -110,10 +110,10 @@ document.getElementById("registerBtn").addEventListener("click", async () => {
                 } else {
                     // AUNQUE FALLE EL ENVÍO AUTOMÁTICO, PERMITIR REENVÍO MANUAL
                     alert("⚠️ Usuario registrado. Si no recibes el SMS, usa 'Reenviar código' en la siguiente pantalla.");
-                    
+
                     // Guardar email igualmente para permitir reenvío
                     localStorage.setItem('pending_verification_email', email);
-                    
+
                     setTimeout(() => {
                         window.location.href = "../../auth-methods/sms-otp/verification/verification.html";
                     }, 1000);
@@ -137,7 +137,7 @@ document.getElementById("registerBtn").addEventListener("click", async () => {
         }
     } catch (error) {
         console.error('❌ Error:', error);
-        
+
         // MANEJO ESPECÍFICO PARA CONEXIÓN RECHAZADA
         if (error.toString().includes('Failed to fetch') || error.toString().includes('CONNECTION_REFUSED')) {
             alert("❌ No se puede conectar al servidor. Verifica que el servicio SMS OTP esté ejecutándose en puerto 8000.");
