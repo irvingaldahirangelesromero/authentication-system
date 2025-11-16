@@ -167,7 +167,7 @@ def login():
     try:
         data = request.get_json()
         print("=" * 50)
-        print("🔐 LOGIN - Datos recibidos:")
+        print("🔐 LOGIN SMS OTP - Datos recibidos:")
         print(f"   Email: {data.get('email')}")
         print("=" * 50)
         
@@ -181,10 +181,20 @@ def login():
         user = mongo_repo.get_user(email)
         
         if not user:
+            print(f"❌ Usuario no encontrado: {email}")
             return jsonify({'error': 'User not found'}), 404
         
         if user['password'] != password:
+            print(f"❌ Contraseña incorrecta para: {email}")
             return jsonify({'error': 'Invalid password'}), 401
+        
+        # VERIFICAR MÉTODO DE AUTENTICACIÓN
+        auth_method = user.get('auth_method', 'sms')
+        print(f"📋 Método de autenticación detectado: {auth_method}")
+        
+        if auth_method != 'sms':
+            print(f"⚠️ Usuario {email} no es SMS, es: {auth_method}")
+            return jsonify({'error': 'User authentication method mismatch'}), 400
         
         # MEJORA: Configurar sesión correctamente
         session.permanent = True
@@ -192,40 +202,34 @@ def login():
         session['phone_number'] = user['phone_number']
         session['pending_2fa'] = True
         session['user_authenticated'] = False
-        session['auth_method'] = user.get('auth_method', 'sms')
+        session['auth_method'] = 'sms'
         
-        print(f"✅ Login exitoso para: {email}")
+        print(f"✅ Login SMS OTP exitoso para: {email}")
         print(f"📋 Sesión configurada: {dict(session)}")
         
-        if user['auth_method'] == 'sms':
-            phone_number = user['phone_number']
-            print(f"📤 ENVIANDO OTP a: {phone_number}")
-            
-            success = send_otp_use_case.execute(phone_number)
-            
-            if success:
-                pending_verifications[email] = {
-                    'phone_number': phone_number,
-                    'timestamp': os.times().elapsed
-                }
-                print(f"✅ OTP enviado exitosamente")
-                
-                return jsonify({
-                    'success': True,
-                    'requires_otp': True,
-                    'auth_method': 'sms',
-                    'message': 'OTP sent to your phone',
-                    'email': email
-                }), 200
-            else:
-                print("❌ Falló el envío de OTP")
-                return jsonify({'error': 'Failed to send OTP'}), 500
+        # ENVIAR OTP AUTOMÁTICAMENTE
+        phone_number = user['phone_number']
+        print(f"📤 ENVIANDO OTP AUTOMÁTICO a: {phone_number}")
         
-        return jsonify({
-            'success': True,
-            'requires_otp': True,
-            'auth_method': 'totp'
-        }), 200
+        success = send_otp_use_case.execute(phone_number)
+        
+        if success:
+            pending_verifications[email] = {
+                'phone_number': phone_number,
+                'timestamp': os.times().elapsed
+            }
+            print(f"✅ OTP enviado exitosamente a {phone_number}")
+            
+            return jsonify({
+                'success': True,
+                'requires_otp': True,
+                'auth_method': 'sms',
+                'message': 'OTP sent to your phone',
+                'email': email
+            }), 200
+        else:
+            print("❌ Falló el envío de OTP")
+            return jsonify({'error': 'Failed to send OTP'}), 500
         
     except Exception as e:
         print(f"❌ Error in login: {e}")

@@ -47,9 +47,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 console.log('📨 Response status TOTP:', response.status);
 
-                // Si TOTP falla, intentar con SMS OTP
-                if (!response.ok) {
-                    console.log('⚠️ TOTP failed, trying SMS OTP...');
+                let data = await response.json();
+                console.log('📦 Response data TOTP:', data);
+
+                // Si TOTP falla o el usuario es de tipo SMS, intentar con SMS OTP
+                if (!response.ok || (data.success && data.auth_method === 'sms')) {
+                    console.log('🔄 Usuario es SMS o TOTP falló, intentando con SMS OTP...');
+                    
                     response = await fetch("https://authentication-system-xp73.onrender.com/login", {
                         method: "POST",
                         headers: {
@@ -58,11 +62,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         credentials: "include",
                         body: JSON.stringify({ email, password })
                     });
+                    
+                    data = await response.json();
                     console.log('📨 Response status SMS OTP:', response.status);
+                    console.log('📦 Response data SMS OTP:', data);
                 }
-
-                const data = await response.json();
-                console.log('📦 Response data:', data);
 
                 if (response.ok && data.success) {
                     if (data.requires_otp) {
@@ -74,14 +78,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         setTimeout(() => {
                             if (data.auth_method === 'sms') {
+                                console.log('📱 Redirigiendo a verificación SMS...');
                                 window.location.href = "../../auth-methods/sms-otp/verification/verification.html";
                             } else {
+                                console.log('🔐 Redirigiendo a verificación TOTP...');
                                 window.location.href = "../../auth-methods/totp/verification/verification.html";
                             }
                         }, 1000);
                     } else {
                         // Login directo sin OTP
                         localStorage.setItem('user_email', email);
+                        console.log('✅ Login directo exitoso, redirigiendo al dashboard...');
                         window.location.href = "../../index/index.html";
                     }
                 } else {
