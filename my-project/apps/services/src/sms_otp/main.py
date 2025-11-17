@@ -27,7 +27,7 @@ app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE='None',
     PERMANENT_SESSION_LIFETIME=timedelta(minutes=30),
-    SESSION_COOKIE_DOMAIN='.onrender.com'  # IMPORTANTE: Dominio compartido
+    #SESSION_COOKIE_DOMAIN='.onrender.com'  # IMPORTANTE: Dominio compartido
 )
 
 # CONFIGURACIÓN CORS COMPLETA PARA PRODUCCIÓN
