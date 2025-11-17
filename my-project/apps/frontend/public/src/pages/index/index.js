@@ -3,7 +3,7 @@ async function cerrarSesion() {
     try {
         // Intentar cerrar sesión en ambos servicios
         await Promise.allSettled([
-            fetch('https://authentication-system-vkmt.onrender.com/logout', {
+            fetch('https://authentication-system-8jpe.onrender.com/logout', {
                 method: 'POST',
                 credentials: 'include'
             }),
@@ -53,7 +53,7 @@ async function cargarUsuario() {
         } else {
             // Por defecto o TOTP, intentar con servicio TOTP
             console.log('🔐 Verificando sesión TOTP...');
-            let resp = await fetch('https://authentication-system-vkmt.onrender.com/user-info', {
+            let resp = await fetch('https://authentication-system-8jpe.onrender.com/user-info', {
                 method: 'GET',
                 credentials: 'include'
             });
@@ -84,7 +84,7 @@ async function cargarUsuario() {
             return;
         }
         
-        resp = await fetch('https://authentication-system-vkmt.onrender.com/user-info', {
+        resp = await fetch('https://authentication-system-8jpe.onrender.com/user-info', {
             method: 'GET',
             credentials: 'include'
         });

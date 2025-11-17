@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('📤 Sending login request...');
 
                 // PRIMERO intentar con TOTP (servicio principal)
-                let response = await fetch("https://authentication-system-vkmt.onrender.com/login", {
+                let response = await fetch("https://authentication-system-8jpe.onrender.com/login", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"

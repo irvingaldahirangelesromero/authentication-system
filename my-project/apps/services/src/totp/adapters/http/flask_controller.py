@@ -43,7 +43,7 @@ CORS(app, resources={
         "origins": [  
             "https://authentication-system-sigma-five.vercel.app",
             "https://authentication-system-xp73.onrender.com",
-            "https://authentication-system-vkmt.onrender.com",
+            "https://authentication-system-8jpe.onrender.com",
         ],
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],
